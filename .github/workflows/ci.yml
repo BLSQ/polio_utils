@@ -1,0 +1,58 @@
+name: CI
+
+# Lint and tests on every push and every pull request. A pull request cannot be merged with a red
+# run once branch protection requires this workflow on `main`.
+
+on:
+  push:
+  pull_request:
+
+env:
+  # Everything in this repository is expected to be clean: nothing is excluded here.
+  LINT_PATHS: |
+    polio_utils
+    tests
+
+jobs:
+  lint:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # `version-file` takes the ruff version from pyproject.toml, so CI runs exactly the binary a
+      # developer has locally. Both checks also read their rules from pyproject.toml - there is no
+      # second set of rules hidden in the workflow.
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
+          src: ${{ env.LINT_PATHS }}
+          args: check --output-format=github
+
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
+          src: ${{ env.LINT_PATHS }}
+          args: format --check --diff
+
+  tests:
+    name: Tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # The library imports `workspace` from openhexa.sdk at module level, so the package itself
+      # (with its runtime dependencies) is installed before the tests run.
+      - name: Install the package and its test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install --group dev
+
+      - name: Run the tests
+        run: pytest tests -q
