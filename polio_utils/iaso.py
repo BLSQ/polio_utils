@@ -25,6 +25,12 @@ receives the connection object::
 The functions that talk to the network take an optional ``session``. In a pipeline it is left out
 and ``requests`` is used directly; in a test it is a small fake that returns fixed answers, so the
 tests need no server and no credential.
+
+Temporary by design: the official ``iaso-client`` library cannot read the ``/api/polio/...``
+endpoints nor take a token in its released version (1.2.0). When a release offers
+``IasoClient.raw(..., fetch_all=True)`` and a public way to set a token, this module becomes a thin
+layer on top of it and ``get_access_token`` and the pagination loop of ``get_paginated`` are
+removed. See the README, "Why not iaso-client (yet)".
 """
 
 import requests

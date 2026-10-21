@@ -28,7 +28,7 @@ The conventions come from `polio_iaso_pipelines_example` (BLSQ); follow it when 
 | --- | --- |
 | `polio_utils/` | The package. One module per area; public names re-exported in `__init__.py`. |
 | `tests/` | One test file per module: `tests/test_<module>.py`. |
-| `.github/workflows/ci.yml` | Ruff (check + format) and pytest on every push and pull request. |
+| `.github/workflows/ci.yml` | Ruff (check + format) and pytest on every pull request and every push to `main`. |
 | `pyproject.toml` | Packaging, dependencies, and the single ruff and pytest configuration. |
 
 ## Domain vocabulary
@@ -42,6 +42,25 @@ The conventions come from `polio_iaso_pipelines_example` (BLSQ); follow it when 
   `CustomConnection` (default `iaso_polio`) and pass the object they receive to
   `get_iaso_client`. The library never looks a connection up by slug and never decides from the
   URL: a `token` field means "send it", otherwise it logs in with `username` and `password`.
+
+## Relation with `iaso-client` (official IASO library)
+
+`iaso-client` (PyPI, repo `BLSQ/iaso-client`) is the official Python client of IASO, maintained
+by the IASO team and pre-installed in the OpenHEXA images. It is **not used yet**, on purpose:
+
+- The released version (1.2.0) only covers org units, org unit types, forms, form versions and
+  instances. The generic call for other endpoints, `IasoClient.raw(..., fetch_all=True)`, exists
+  on its `main` branch but is not released, so it cannot read the `/api/polio/...` endpoints the
+  pipelines need.
+- It only logs in with a username and a password. Setting a token (what `iaso_polio` holds) is
+  only possible through its internal `client.transport.set_bearer_token()`.
+
+When a release has `raw()` and a public way to set a token, `polio_utils.iaso` becomes a thin
+layer on top of it: `get_iaso_client` returns an `IasoClient` (token or login, decided from the
+connection as today), `get_access_token` and the pagination loop of `get_paginated` are removed,
+and only the extraction of `results_key` from each page stays here. Until then, do not add
+another hand-written IASO client: extend `polio_utils.iaso`. For org units, forms or instances,
+use `iaso-client` directly.
 
 ## Commands
 

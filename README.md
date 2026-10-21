@@ -52,6 +52,24 @@ def my_pipeline(iaso_connection: CustomConnection) -> None:
 - `get_access_token` raises when the login is refused or returns no token. The copies built the
   header `Bearer None` and failed later with a 401.
 
+### Why not `iaso-client` (yet)
+
+[`iaso-client`](https://pypi.org/project/iaso-client/) is the official Python client of IASO,
+maintained by the IASO team and pre-installed in the OpenHEXA images. We checked it (version
+1.2.0, and its `main` branch) before writing `polio_utils.iaso`:
+
+| Need of the polio pipelines | `iaso-client` 1.2.0 (released) |
+| --- | --- |
+| Read the `/api/polio/...` endpoints (campaigns, vaccine stock, pre-alerts...) with pagination | Not covered. Only org units, org unit types, forms, form versions and instances. The generic `IasoClient.raw(..., fetch_all=True)` exists on `main` but is not released. |
+| Authenticate with the token of `iaso_polio` | Only `login(username, password)`. A token can only be set through the internal `client.transport.set_bearer_token()`. |
+| Fail on HTTP errors | Yes, typed exceptions (`IasoServerError`, `IasoAuthError`...). |
+| Timeout | Yes, fixed at 60 s. |
+
+So `polio_utils.iaso` keeps its own small client for now. When a release of `iaso-client` has
+`raw()` and a public way to set a token, `polio_utils.iaso` will become a thin layer on top of it:
+`get_iaso_client` will return an `IasoClient`, and `get_access_token` and the pagination loop of
+`get_paginated` will be removed. For org units, forms or instances, pipelines can already use
+`iaso-client` directly.
 
 ## Using it in a pipeline
 
@@ -71,6 +89,7 @@ ruff format --check polio_utils tests
 pytest tests -q
 ```
 
-CI runs the same three checks on every push and pull request, and fails when any of them fails.
+CI runs the same three checks on every pull request and every push to `main`, and fails when any
+of them fails.
 
 Every change is made on its own branch and merged through a pull request.

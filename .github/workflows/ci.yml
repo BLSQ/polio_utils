@@ -1,17 +1,20 @@
 name: CI
 
-# Lint and tests on every push and every pull request. A pull request cannot be merged with a red
-# run once branch protection requires this workflow on `main`.
+# Lint and tests on every pull request and on every push to `main`. Pushes to other branches are
+# left out on purpose: they are already checked by their pull request, and listing both would run
+# every job twice. A pull request cannot be merged with a red run once branch protection requires
+# this workflow on `main`.
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 env:
   # Everything in this repository is expected to be clean: nothing is excluded here.
-  LINT_PATHS: |
-    polio_utils
-    tests
+  # One line, space separated: ruff-action passes `src` to ruff as it is, and a multi-line value
+  # breaks the command.
+  LINT_PATHS: polio_utils tests
 
 jobs:
   lint:
@@ -46,8 +49,8 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      # The library imports `workspace` from openhexa.sdk at module level, so the package itself
-      # (with its runtime dependencies) is installed before the tests run.
+      # The library imports openhexa.sdk at module level, so the package itself (with its runtime
+      # dependencies) is installed before the tests run.
       - name: Install the package and its test dependencies
         run: |
           python -m pip install --upgrade pip
