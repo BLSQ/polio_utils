@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.vscode/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# Data must never be committed: it lives in the OpenHEXA workspace
+*.csv
+!tests/**/*.csv
+
+# Packaging / build artefacts
+*.egg-info/
+build/
+dist/
